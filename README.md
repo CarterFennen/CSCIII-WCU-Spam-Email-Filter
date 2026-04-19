@@ -3,6 +3,16 @@
 ##System Architecture (UML)
 ```mermaid
 classDiagram
+    direction TB
+
+    class Main {
+        +main(String[] args) void
+    }
+
+    class CSVParser {
+        +readFile(String path) List~Email~
+    }
+
     class Email {
         -int id
         -String rawText
@@ -12,6 +22,11 @@ classDiagram
         +getRawText() String
         +getLabel() int
         +computeFeatures() EmailFeatures
+    }
+
+    class TextProcessor {
+        +extractFeatures(Email email) EmailFeatures
+        +findTopWords(List~Email~ trainEmails, int topN) void
     }
 
     class EmailFeatures {
@@ -25,15 +40,6 @@ classDiagram
         +toString() String
     }
 
-    class CSVParser {
-        +readFile(String path) List~Email~
-    }
-
-    class TextProcessor {
-        +extractFeatures(Email email) EmailFeatures
-        +findTopWords(List~Email~ trainEmails, int topN) void
-    }
-
     class FeatureSummary {
         -Map~String, Double~ means
         -Map~String, Double~ mins
@@ -43,7 +49,6 @@ classDiagram
         +getMean(String feature) double
         +getMin(String feature) double
         +getMax(String feature) double
-        +getCount() int
         +getMeans() Map~String, Double~
         +normalize(String feature, double value) double
         +toString() String
@@ -67,7 +72,7 @@ classDiagram
 
     class NaiveBayesClassifier {
         -Map~String, Double~ spamProbabilities
-        -Map~String, Double~ hamProbabilities
+        -Map~string, Double~ hamProbabilities
         -double spamPrior
         -double hamPrior
         +train(List~EmailFeatures~ spamFeatures, List~EmailFeatures~ hamFeatures) void
@@ -77,17 +82,21 @@ classDiagram
         -computeScore(EmailFeatures email, Map~String, Double~ probabilities, double prior) double
     }
 
+    Main --> CSVParser : 1. reads CSV
+    Main --> TextProcessor : 2. extracts features
+    Main --> FeatureSummary : 3. builds models
+    Main --> SpamClassifier : 4. trains and tests
+    Main --> NaiveBayesClassifier : 5. trains and tests
+    Main --> CsvWriter : 6. writes output
+
     CSVParser --> Email : creates
-    Email --> EmailFeatures : produces
-    TextProcessor --> EmailFeatures : extracts
+    TextProcessor --> EmailFeatures : produces
     TextProcessor ..> Email : reads
-    FeatureSummary --> EmailFeatures : summarizes
-    CsvWriter ..> EmailFeatures : writes
-    CsvWriter ..> FeatureSummary : writes
+    EmailFeatures ..> Email : belongs to
+    FeatureSummary ..> EmailFeatures : summarizes
     SpamClassifier --> FeatureSummary : uses
     SpamClassifier ..> EmailFeatures : classifies
     NaiveBayesClassifier ..> EmailFeatures : classifies
-    NaiveBayesClassifier ..> Email : evaluates
-    SpamClassifier ..> Email : evaluates
-
+    CsvWriter ..> EmailFeatures : writes
+    CsvWriter ..> FeatureSummary : writes
 ```
