@@ -2,66 +2,92 @@
 
 ##System Architecture (UML)
 ```mermaid
-
 classDiagram
-    class Main {
-        +main(args: String[]) void
-        -readData(path: String) List~Email~
-        -buildSpamModel(emails: List~Email~) FeatureSummary
-        -buildNotSpamModel(emails: List~Email~) FeatureSummary
-        -writeOutput(features: List~EmailFeatures~, spam: FeatureSummary, notSpam: FeatureSummary) void
-    }
-
     class Email {
-        -id: int
-        -rawText: String
-        -label: Boolean
-        +getId() int
+        -int id
+        -String rawText
+        -int label
+        +Email(int id, String rawText, int label)
+        +getID() int
         +getRawText() String
-        +getLabel() Boolean
+        +getLabel() int
         +computeFeatures() EmailFeatures
     }
 
     class EmailFeatures {
-        -wordCounts: Map~String, Integer~
-        -totalWordCount: int
-        -avgWordLength: double
-        -callToActionCount: int
-        -exclamationCount: int
-        -allCapsCount: int
-        -hasUrl: boolean
-        -dollarSignCount: int
-        +distanceTo(other: EmailFeatures) double
-        +distanceTo(summary: FeatureSummary) double
-    }
-
-    class FeatureSummary {
-        -wordCounts: Map~String, Double~
-        -totalWordCount: double
-        -summaryWordLength: double
-        -callToActionCount: double
-        -exclamationCount: double
-        -allCapsCount: double
-        -hasUrl: double
-        -dollarSignCount: double
-        +distanceTo(other: EmailFeatures) double
+        -int emailId
+        -Map~String, Double~ features
+        +EmailFeatures(int emailId)
+        +set(String name, double value) void
+        +get(String name) double
+        +getEmailId() int
+        +getFeatures() Map~String, Double~
+        +toString() String
     }
 
     class CSVParser {
-        +readFile(path: String) List~Email~
+        +readFile(String path) List~Email~
+    }
+
+    class TextProcessor {
+        +extractFeatures(Email email) EmailFeatures
+        +findTopWords(List~Email~ trainEmails, int topN) void
+    }
+
+    class FeatureSummary {
+        -Map~String, Double~ means
+        -Map~String, Double~ mins
+        -Map~String, Double~ maxs
+        -int count
+        +summarize(List~EmailFeatures~ featuresList) void
+        +getMean(String feature) double
+        +getMin(String feature) double
+        +getMax(String feature) double
+        +getCount() int
+        +getMeans() Map~String, Double~
+        +normalize(String feature, double value) double
+        +toString() String
     }
 
     class CsvWriter {
-        +writeFeatures(features: List~EmailFeatures~, path: String) void
-        +writeSummary(summary: FeatureSummary, path: String) void
+        +writeFeatures(List~EmailFeatures~ features, String path) void
+        +writeSummary(FeatureSummary summary, String path) void
     }
 
-    %% Relationships
-    Main --> CSVParser : uses
-    Main --> CsvWriter : uses
-    Main --> Email : manages
-    Email "1" *-- "1" EmailFeatures : computes
-    FeatureSummary "1" o-- "many" EmailFeatures : summarizes
-    EmailFeatures ..> FeatureSummary : calculates distance to
+    class SpamClassifier {
+        -FeatureSummary spamModel
+        -FeatureSummary hamModel
+        -Map~String, Double~ weights
+        +train(List~EmailFeatures~ spamFeatures, List~EmailFeatures~ hamFeatures) void
+        +distanceToModel(EmailFeatures email, FeatureSummary model) double
+        +predict(EmailFeatures email) String
+        +predictAndWrite(List~EmailFeatures~ emails, String path) void
+        +testAccuracy(List~EmailFeatures~ features, List~Email~ emails) void
+    }
+
+    class NaiveBayesClassifier {
+        -Map~String, Double~ spamProbabilities
+        -Map~String, Double~ hamProbabilities
+        -double spamPrior
+        -double hamPrior
+        +train(List~EmailFeatures~ spamFeatures, List~EmailFeatures~ hamFeatures) void
+        +predict(EmailFeatures email) String
+        +testAccuracy(List~EmailFeatures~ features, List~Email~ emails) void
+        -computeMeans(List~EmailFeatures~ featuresList) Map~String, Double~
+        -computeScore(EmailFeatures email, Map~String, Double~ probabilities, double prior) double
+    }
+
+    CSVParser --> Email : creates
+    Email --> EmailFeatures : produces
+    TextProcessor --> EmailFeatures : extracts
+    TextProcessor ..> Email : reads
+    FeatureSummary --> EmailFeatures : summarizes
+    CsvWriter ..> EmailFeatures : writes
+    CsvWriter ..> FeatureSummary : writes
+    SpamClassifier --> FeatureSummary : uses
+    SpamClassifier ..> EmailFeatures : classifies
+    NaiveBayesClassifier ..> EmailFeatures : classifies
+    NaiveBayesClassifier ..> Email : evaluates
+    SpamClassifier ..> Email : evaluates
 
 ```
