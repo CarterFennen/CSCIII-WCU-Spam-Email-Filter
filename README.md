@@ -199,9 +199,9 @@ Features were automatically discovered from the training set by calculating a sp
 
 | | Weighted Centroid | Naive Bayes |
 |---|---|---|
-| Overall Accuracy | 88.00% | 93.33% |
-| Spam Detection | 69.44% | 72.22% |
-| Ham Detection | 92.07% | 97.97% |
+| Overall Accuracy | 88.50% | 93.00% |
+| Spam Detection | 66.36% | 62.73% |
+| Ham Detection | 93.47% | 98.80% |
 
 Naive Bayes outperformed the centroid classifier on every metric. Ham accuracy is prioritized over spam accuracy because falsely flagging a legitimate email as spam is more harmful than letting a spam email through. Final predictions are generated using Naive Bayes.
 
