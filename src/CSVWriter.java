@@ -21,7 +21,7 @@ import java.util.Map;
  * is automatically closed after writing even if an exception occurs,
  * preventing file corruption or resource leaks.
  */
-public class CsvWriter {
+public class CSVWriter {
 
     /*
      * Writes the numerical features of every email to a CSV file.
