@@ -5,23 +5,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Carter Fennen
- * @date April 2026
- */
-
-/*
- * CSVParser - responsible for reading the dataset from a CSV file
- * and converting each row into an Email object.
+ * CsvParser.java
  *
- * The dataset has 3 columns: ID, raw email text and a label (1 = spam, 0 = ham).
+ * Reads the spam dataset from a CSV file and converts each row
+ * into an Email object. Uses BufferedReader for efficient file reading
+ * and lastIndexOf to reliably separate email text from the label column.
+ *
+ * The dataset has 3 columns: ID, raw email text, and a label (1 = spam, 0 = ham).
  * Since emails contain no commas, lastIndexOf is used to reliably
- * locate the separator between ID, text and the label.
+ * locate the separator between the text and the label.
  *
  * Design Decision: BufferedReader is used instead of a Scanner because
  * it reads the file in chunks rather than character by character, making
  * it significantly more efficient for large files like this 3000 email dataset.
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
-public class CSVParser {
+public class CsvParser {
 
     /*
      * Reads the CSV file line by line and builds a list of Email objects.
@@ -33,9 +34,9 @@ public class CSVParser {
     public List<Email> readFile(String path) {
         List<Email> emails = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader("spam_or_not_spam.csv"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String line;
-            br.readLine(); // skip header row "ID1, email,label"
+            br.readLine(); // skip header row "id, email, label"
             int id = 0;
 
             while ((line = br.readLine()) != null) {
