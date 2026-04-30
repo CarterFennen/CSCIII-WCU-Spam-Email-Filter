@@ -1,25 +1,21 @@
-/**
- * @author Carter Fennen
- * @date April 2026
- */
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-/*
- * CsvWriter - responsible for saving computed features and summary
- * statistics to CSV files for analysis and record keeping.
+/**
+ * CsvWriter.java
  *
- * Produces three output files:
- *   email_features.csv - numerical features for every email
- *   spam_summary.csv   - mean, min, max of each feature across spam emails
- *   ham_summary.csv    - mean, min, max of each feature across ham emails
+ * Saves computed email features and summary statistics to CSV files
+ * for analysis and record keeping. Produces email_features.csv,
+ * spam_summary.csv, and ham_summary.csv after each run.
  *
  * Design Decision: FileWriter is used with try-with-resources so the file
  * is automatically closed after writing even if an exception occurs,
  * preventing file corruption or resource leaks.
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
 public class CsvWriter {
 
