@@ -1,28 +1,25 @@
-/**
- * @author Carter Fennen
- * @date April 2026
- */
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
- * NaiveBayesClassifier - classifies emails using probability scoring
- * rather than distance measurement.
+/**
+ * NaiveBayesClassifier.java
  *
- * Trains on spam and ham EmailFeatures to learn the average feature
- * values for each class and the prior probability of each class.
- * Predicts by computing a spam score and ham score for each email
- * and returning whichever class scores higher.
+ * Classifies emails using probability scoring rather than distance measurement.
+ * Trains on spam and ham EmailFeatures to learn the average feature values
+ * for each class and the prior probability of each class. Predicts by computing
+ * a spam score and ham score for each email and returning whichever is higher.
  *
  * Design Decision: Log probabilities are used instead of raw probabilities
  * because multiplying many small decimal numbers together creates values
  * so tiny that computers lose precision and round them to zero. Taking
  * the log converts multiplication into addition which is mathematically
  * equivalent but stable.
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
 public class NaiveBayesClassifier {
 
@@ -108,6 +105,7 @@ public class NaiveBayesClassifier {
     private double computeScore(EmailFeatures email,
                                 Map<String, Double> probabilities,
                                 double prior) {
+
         // start with log of prior probability as the baseline
         double score = Math.log(prior);
 
