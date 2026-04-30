@@ -109,12 +109,6 @@ A Java implementation of an end-to-end spam classification system that reads a d
 
 ---
 
-## Showcase
-
-*(add demo video link here)*
-
----
-
 ## Project Overview
 
 This project builds a complete spam filter pipeline from scratch using core Java and object-oriented design. Every phase — parsing, feature extraction, model building, and classification — is implemented as a separate, modular component.
