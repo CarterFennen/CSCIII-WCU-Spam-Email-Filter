@@ -1,11 +1,7 @@
 /**
- * @author Carter Fennen
- * @date April 2026
- */
-
- /*
- * Email - represents a single email from the dataset.
+ * Email.java
  *
+ * Represents a single email from the dataset.
  * Acts as the foundational data object for the entire pipeline.
  * Every other class either creates, reads, or processes Email objects
  * in some way. Contains only the raw data needed to identify and
@@ -15,17 +11,19 @@
  * to support three states: 1 for spam, 0 for ham, and -1 for emails
  * where the label is unknown, allowing the same class to handle both
  * training and prediction scenarios.
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
- 
 public class Email {
 
-    private int id;          // unique identifier assigned during CSV parsing
-    private String rawText;  // the full raw text content of the email
-    private int label;       // 1 = spam, 0 = ham, -1 = unknown
+    private int id;         // unique identifier assigned during CSV parsing
+    private String rawText; // the full raw text content of the email
+    private int label;      // 1 = spam, 0 = ham, -1 = unknown
 
     /*
      * Creates an Email object with its id, raw text, and label.
-     * Called by CSVParser once per row in the dataset.
+     * Called by CsvParser once per row in the dataset.
      *
      * @param id      - unique identifier assigned sequentially from 0
      * @param rawText - the full text content of the email
