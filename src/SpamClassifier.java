@@ -1,17 +1,13 @@
-/**
- * @author Carter Fennen
- * @date April 2026
- */
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
- * SpamClassifier - classifies emails using Weighted Euclidean Distance.
+/**
+ * SpamClassifier.java
  *
+ * Classifies emails using Weighted Euclidean Distance.
  * Trains on spam and ham EmailFeatures to build two FeatureSummary models
  * representing the average spam and ham email. Predicts by measuring the
  * weighted distance from a new email to each model and returning the closer one.
@@ -26,6 +22,9 @@ import java.util.Map;
  * dataset imbalance of 5x more ham than spam. Without it the classifier
  * predicts almost everything as ham. The value 1.8 was found through manual
  * experimentation testing 1.5, 1.8, 2.0, and 2.5.
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
 public class SpamClassifier {
 
