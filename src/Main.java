@@ -1,29 +1,29 @@
-/**
- * @author Carter Fennen
- * @date April 2026
- */
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-/*
- * Main - entry point for the spam filter program.
- * Orchestrates the full pipeline from reading the dataset
- * to training both classifiers and evaluating their accuracy.
+/**
+ * Main.java
+ *
+ * Entry point for the spam filter program.
+ * Orchestrates the full pipeline from loading the dataset to training
+ * both classifiers and writing all output files.
  *
  * Pipeline: Load Emails > Shuffle and Split > Extract Features > Train > Evaluate > Write Output
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
 public class Main {
     public static void main(String[] args) {
 
         /*
          * Step 1: Load Emails
-         * CSVParser reads the dataset and converts each row into an
+         * CsvParser reads the dataset and converts each row into an
          * Email object containing the id, raw text, and label.
          */
-        CSVParser parser = new CSVParser();
+        CsvParser parser = new CsvParser();
         List<Email> emails = parser.readFile("spam_or_not_spam.csv");
         System.out.println("Loaded: " + emails.size() + " emails\n");
 
