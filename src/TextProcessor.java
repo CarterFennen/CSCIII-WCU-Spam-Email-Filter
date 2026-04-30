@@ -1,15 +1,13 @@
-/**
- * @author Carter Fennen
- * @date April 2026
- */
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
- * TextProcessor - responsible for converting raw email text into
- * numerical features that the classifiers can mathematically work with.
+/**
+ * TextProcessor.java
+ *
+ * Converts raw email text into numerical features that the classifiers
+ * can mathematically work with. Analyzes the training set to automatically
+ * discover the most differentiating words between spam and ham.
  *
  * Contains two methods:
  *   extractFeatures  - converts a single email into an EmailFeatures object
@@ -20,6 +18,9 @@ import java.util.Map;
  * library because the dataset is already preprocessed. URLs are replaced
  * with "hyperlink", numbers with "NUMBER", and all text is lowercased,
  * so simple space splitting is reliable and sufficient.
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
 public class TextProcessor {
 
@@ -50,18 +51,17 @@ public class TextProcessor {
         // each feature looks up its word in the frequency map
         // returns 0.0 if the word never appeared in this email
         // cast to double to match the EmailFeatures map type
-
-        features.set("hyperlinkCount", (double) freq.getOrDefault("hyperlink", 0));  // 195x ratio - marketing spam
-        features.set("kingdomCount",   (double) freq.getOrDefault("kingdom", 0));    // 97x  ratio - Nigerian fraud spam
+        features.set("hyperlinkCount", (double) freq.getOrDefault("hyperlink",  0)); // 195x ratio - marketing spam
+        features.set("kingdomCount",   (double) freq.getOrDefault("kingdom",    0)); // 97x  ratio - Nigerian fraud spam
         features.set("guaranteedCount",(double) freq.getOrDefault("guaranteed", 0)); // 69x  ratio - financial spam
-        features.set("mortgageCount",  (double) freq.getOrDefault("mortgage", 0));   // 41x  ratio - financial spam
-        features.set("clickCount",     (double) freq.getOrDefault("click", 0));      // 39x  ratio - marketing spam
-        features.set("mailingsCount",  (double) freq.getOrDefault("mailings", 0));   // 33x  ratio - marketing spam
-        features.set("moneyCount",     (double) freq.getOrDefault("money", 0));      // 15x  ratio - financial spam
-        features.set("offerCount",     (double) freq.getOrDefault("offer", 0));      // 14x  ratio - marketing spam
-        features.set("orderCount",     (double) freq.getOrDefault("order", 0));      // 13x  ratio - marketing spam
-        features.set("freeCount",      (double) freq.getOrDefault("free", 0));       // 8x   ratio - marketing spam
-        features.set("urlCount",       (double) freq.getOrDefault("URL", 0));        // ham indicator - appears more in ham
+        features.set("mortgageCount",  (double) freq.getOrDefault("mortgage",   0)); // 41x  ratio - financial spam
+        features.set("clickCount",     (double) freq.getOrDefault("click",      0)); // 39x  ratio - marketing spam
+        features.set("mailingsCount",  (double) freq.getOrDefault("mailings",   0)); // 33x  ratio - marketing spam
+        features.set("moneyCount",     (double) freq.getOrDefault("money",      0)); // 15x  ratio - financial spam
+        features.set("offerCount",     (double) freq.getOrDefault("offer",      0)); // 14x  ratio - marketing spam
+        features.set("orderCount",     (double) freq.getOrDefault("order",      0)); // 13x  ratio - marketing spam
+        features.set("freeCount",      (double) freq.getOrDefault("free",       0)); // 8x   ratio - marketing spam
+        features.set("urlCount",       (double) freq.getOrDefault("URL",        0)); // ham indicator - appears more in ham
 
         return features;
     }
