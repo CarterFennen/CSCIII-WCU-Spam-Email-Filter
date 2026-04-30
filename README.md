@@ -135,32 +135,32 @@ Testing emails:  600
 --- Top 10 Spam Words (Training Set Only) ---
 Word                 Spam       Ham        Ratio
 --------------------------------------------------
-hyperlink            673        3          224.33
+hyperlink            673        3          197.33
 kingdom              97         2          48.50
-mailings             63         2          31.50
+mailings             63         2          31.00
 mortgage             47         2          23.50
 ...
 
-Training spam: 400
-Training ham:  2000
+Training spam: 390
+Training ham:  2010
 
 --- Weighted Centroid Classifier ---
 Models trained successfully
-Total:    528/600
-Accuracy: 88.00%
+Total:    531/600
+Accuracy: 88.50%
 
-Spam correctly identified: 75/108 (69.44%)
-Ham correctly identified:  453/492 (92.07%)
+Spam correctly identified: 75/108 (66.36%)
+Ham correctly identified:  453/492 (93.47%)
 
 --- Naive Bayes Classifier ---
-Spam prior: 0.1667
-Ham prior:  0.8333
+Spam prior: 0.1625
+Ham prior:  0.8375
 Naive Bayes trained successfully
-Total:    560/600
-Accuracy: 93.33%
+Total:    558/600
+Accuracy: 93.00%
 
-Spam correctly identified: 78/108 (72.22%)
-Ham correctly identified:  482/492 (97.97%)
+Spam correctly identified: 78/108 (62.73%)
+Ham correctly identified:  482/492 (99.80%)
 
 --- Writing Output Files ---
 Features written to: email_features.csv
