@@ -1,6 +1,6 @@
 # CSCIII-WCU-Spam-Email-Filter
 
-##System Architecture (UML)
+## System Architecture (UML)
 ```mermaid
 classDiagram
     direction TB
@@ -9,7 +9,7 @@ classDiagram
         +main(String[] args) void
     }
 
-    class CSVParser {
+    class CsvParser {
         +readFile(String path) List~Email~
     }
 
@@ -72,24 +72,25 @@ classDiagram
 
     class NaiveBayesClassifier {
         -Map~String, Double~ spamProbabilities
-        -Map~string, Double~ hamProbabilities
+        -Map~String, Double~ hamProbabilities
         -double spamPrior
         -double hamPrior
         +train(List~EmailFeatures~ spamFeatures, List~EmailFeatures~ hamFeatures) void
         +predict(EmailFeatures email) String
+        +predictAndWrite(List~EmailFeatures~ emails, String path) void
         +testAccuracy(List~EmailFeatures~ features, List~Email~ emails) void
         -computeMeans(List~EmailFeatures~ featuresList) Map~String, Double~
         -computeScore(EmailFeatures email, Map~String, Double~ probabilities, double prior) double
     }
 
-    Main --> CSVParser : 1. reads CSV
+    Main --> CsvParser : 1. reads CSV
     Main --> TextProcessor : 2. extracts features
     Main --> FeatureSummary : 3. builds models
     Main --> SpamClassifier : 4. trains and tests
     Main --> NaiveBayesClassifier : 5. trains and tests
     Main --> CsvWriter : 6. writes output
 
-    CSVParser --> Email : creates
+    CsvParser --> Email : creates
     TextProcessor --> EmailFeatures : produces
     TextProcessor ..> Email : reads
     EmailFeatures ..> Email : belongs to
@@ -100,6 +101,7 @@ classDiagram
     CsvWriter ..> EmailFeatures : writes
     CsvWriter ..> FeatureSummary : writes
 ```
+
 # Spam Filter
 ### From Raw Email to Spam Prediction — Java | OOP | Machine Learning
 
@@ -119,7 +121,7 @@ This project builds a complete spam filter pipeline from scratch using core Java
 
 | Phase | Component | What It Does |
 |---|---|---|
-| 1 | **CSVParser** | Reads the dataset and converts each row into an Email object |
+| 1 | **CsvParser** | Reads the dataset and converts each row into an Email object |
 | 2 | **TextProcessor** | Converts raw email text into numerical features |
 | 3 | **FeatureSummary** | Computes mean, min, and max for each feature across spam and ham |
 | 4 | **SpamClassifier** | Classifies emails using Weighted Euclidean Distance |
@@ -199,9 +201,9 @@ Features were automatically discovered from the training set by calculating a sp
 
 | | Weighted Centroid | Naive Bayes |
 |---|---|---|
-| Overall Accuracy | 88.50% | 93.00% |
-| Spam Detection | 66.36% | 62.73% |
-| Ham Detection | 93.47% | 98.80% |
+| Overall Accuracy | 88.00% | 93.33% |
+| Spam Detection | 69.44% | 72.22% |
+| Ham Detection | 92.07% | 97.97% |
 
 Naive Bayes outperformed the centroid classifier on every metric. Ham accuracy is prioritized over spam accuracy because falsely flagging a legitimate email as spam is more harmful than letting a spam email through. Final predictions are generated using Naive Bayes.
 
@@ -210,11 +212,11 @@ Naive Bayes outperformed the centroid classifier on every metric. Ham accuracy i
 ## Project Structure
 
 ```
-SpamFilter/
+CSCIII-WCU-Spam-Email-Filter/
 ├── src/
 │   ├── Email.java                  # Data object representing a single email
 │   ├── EmailFeatures.java          # Container for numerical features per email
-│   ├── CSVParser.java              # Reads dataset and produces Email objects
+│   ├── CsvParser.java              # Reads dataset and produces Email objects
 │   ├── TextProcessor.java          # Extracts features and finds top spam words
 │   ├── FeatureSummary.java         # Computes summary statistics for a group of emails
 │   ├── CsvWriter.java              # Writes features and summaries to CSV files
@@ -241,8 +243,8 @@ Download the dataset from [Kaggle](https://www.kaggle.com/datasets/ozlerhakan/sp
 
 ### Setup
 ```bash
-git clone https://github.com/CarterFennen/spam-filter.git
-cd spam-filter
+git clone https://github.com/CarterFennen/CSCIII-WCU-Spam-Email-Filter.git
+cd CSCIII-WCU-Spam-Email-Filter
 ```
 
 ### Compile
@@ -276,6 +278,12 @@ Naive Bayes is widely considered the industry standard for text based spam filte
 
 **Why separate the two classifiers?**
 Keeping both classifiers allows direct comparison on identical training and test data, making it a clean measure of which algorithm handles the data better. Both are independent and neither relies on the other.
+
+**Why BufferedReader over Scanner?**
+BufferedReader reads the file in chunks rather than character by character, making it significantly more efficient for large files like this 3000 email dataset.
+
+**Why a fixed random seed of 42?**
+Seeding Collections.shuffle ensures the train/test split is identical every run, producing consistent accuracy results without removing the benefits of randomized shuffling.
 
 ---
 
