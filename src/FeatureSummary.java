@@ -1,15 +1,12 @@
-/**
- * @author Carter Fennen
- * @date April 2026
- */
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
- * FeatureSummary - computes and stores summary statistics for a group
- * of EmailFeatures objects representing either spam or ham emails.
+/**
+ * FeatureSummary.java
+ *
+ * Computes and stores summary statistics for a group of EmailFeatures
+ * objects representing either spam or ham emails.
  *
  * Calculates mean, min, and max for each feature across all emails
  * in the group. Run separately on spam and ham training emails to
@@ -19,6 +16,9 @@ import java.util.Map;
  * and maxs so each statistic can be retrieved independently by name,
  * making it clean to pass individual values to the classifiers without
  * having to unpack a combined data structure.
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
 public class FeatureSummary {
 
@@ -93,10 +93,17 @@ public class FeatureSummary {
         return maxs.getOrDefault(feature, 0.0);
     }
 
+    /*
+     * Returns the total number of emails in this summary group.
+     */
     public int getCount() {
         return count;
     }
 
+    /*
+     * Returns the full means map.
+     * Used by CsvWriter to iterate over all features when writing summaries.
+     */
     public Map<String, Double> getMeans() {
         return means;
     }
