@@ -1,14 +1,10 @@
-/**
- * @author Carter Fennen
- * @date April 2026
- */
-
 import java.util.HashMap;
 import java.util.Map;
 
-/*
- * EmailFeatures - stores the numerical features extracted from a single email.
+/**
+ * EmailFeatures.java
  *
+ * Stores the numerical features extracted from a single email.
  * Acts as a container that maps feature names to their computed values.
  * For example "hyperlinkCount" maps to 3.0 if the word "hyperlink"
  * appeared three times in that email.
@@ -16,6 +12,9 @@ import java.util.Map;
  * Design Decision: A HashMap is used instead of fixed fields so features
  * can be added or removed in TextProcessor without changing this class
  * at all. This keeps the feature set flexible throughout development.
+ *
+ * @author Carter Fennen
+ * @date April 2026
  */
 public class EmailFeatures {
 
@@ -53,6 +52,9 @@ public class EmailFeatures {
         return features.getOrDefault(name, 0.0);
     }
 
+    /*
+     * Returns the unique id of the email these features belong to.
+     */
     public int getEmailId() {
         return emailId;
     }
