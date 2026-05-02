@@ -1,261 +1,377 @@
-// TextProcessingTests.java
 import org.junit.jupiter.api.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * TextProcessingTests.java
+ *
+ * Unit tests for the spam filter pipeline.
+ * Tests each requirement against the current implementation.
+ *
+ * @author Carter Fennen
+ * @date April 2026
+ */
 public class TextProcessingTests {
 
-    // REQUIREMENT 1: Read and parse a CSV file into email objects
+    // REQUIREMENT 1: Read and parse a CSV file into Email objects
 
     @Test
-    @DisplayName("CSVParser returns non-null, non-empty list from valid file")
-    void testCSVParserReturnsEmails() throws Exception {
+    @DisplayName("CsvParser returns non-null, non-empty list from valid file")
+    void testCsvParserReturnsEmails() {
         // Checks that readFile() returns a populated list from a valid CSV
-        CSVParser parser = new CSVParser();
+        CsvParser parser = new CsvParser();
         List<Email> emails = parser.readFile("spam_or_not_spam.csv");
         assertNotNull(emails, "Email list should not be null");
         assertFalse(emails.isEmpty(), "Email list should not be empty");
     }
 
     @Test
+    @DisplayName("CsvParser loads exactly 3000 emails from dataset")
+    void testCsvParserLoads3000Emails() {
+        // Checks that all 3000 rows are parsed correctly
+        CsvParser parser = new CsvParser();
+        List<Email> emails = parser.readFile("spam_or_not_spam.csv");
+        assertEquals(3000, emails.size(), "Dataset should contain exactly 3000 emails");
+    }
+
+    @Test
     @DisplayName("Parsed emails have valid IDs, rawText, and labels")
-    void testParsedEmailFieldsArePopulated() throws Exception {
-        // Checks that each parsed email has non-blank text and a valid label (true, false, or null)
-        CSVParser parser = new CSVParser();
+    void testParsedEmailFieldsArePopulated() {
+        // Checks that each parsed email has non-blank text and a valid label (0 or 1)
+        CsvParser parser = new CsvParser();
         List<Email> emails = parser.readFile("spam_or_not_spam.csv");
         for (Email e : emails) {
             assertNotNull(e.getRawText(), "Raw text should not be null");
             assertFalse(e.getRawText().isBlank(), "Raw text should not be blank");
-            assertTrue(e.getLabel() == null || e.getLabel() == true || e.getLabel() == false,
-                    "Label should be true, false, or null");
+            assertTrue(e.getLabel() == 0 || e.getLabel() == 1,
+                    "Label should be 0 (ham) or 1 (spam)");
         }
     }
 
     @Test
-    @DisplayName("CSVParser throws or returns empty on missing file")
-    void testCSVParserHandlesMissingFile() {
-        // Checks that an exception is thrown when the file path does not exist
-        CSVParser parser = new CSVParser();
-        assertThrows(Exception.class, () -> parser.readFile("nonexistent_file.csv"),
-                "Should throw when file does not exist");
-    }
-
-    // REQUIREMENT 2: Compute features for each email
-
-    @Test
-    @DisplayName("EmailFeatures computes non-negative word count")
-    void testWordCountIsNonNegative() {
-        // Checks that word count is zero or greater for any email
-        Email email = new Email(1, "Buy now! Click here! FREE OFFER $10 http://spam.com", true);
-        EmailFeatures features = new EmailFeatures(email);
-        assertTrue(features.getWordCount() >= 0, "Word count should be >= 0");
+    @DisplayName("CsvParser returns empty list on missing file")
+    void testCsvParserHandlesMissingFile() {
+        // Checks that an empty list is returned when the file path does not exist
+        CsvParser parser = new CsvParser();
+        List<Email> emails = parser.readFile("nonexistent_file.csv");
+        assertTrue(emails.isEmpty(), "Should return empty list when file does not exist");
     }
 
     @Test
-    @DisplayName("EmailFeatures correctly detects exclamation points")
-    void testExclamationPointCount() {
-        // Checks that exclamation points are counted correctly against a known string
-        Email email = new Email(2, "Buy now! Hurry up! Limited time!", true);
-        EmailFeatures features = new EmailFeatures(email);
-        assertEquals(3, features.getExclamationCount(), "Should count 3 exclamation points");
+    @DisplayName("Dataset contains both spam and ham emails")
+    void testDatasetContainsBothClasses() {
+        // Checks that the dataset has at least one spam and one ham email
+        CsvParser parser = new CsvParser();
+        List<Email> emails = parser.readFile("spam_or_not_spam.csv");
+        long spamCount = emails.stream().filter(e -> e.getLabel() == 1).count();
+        long hamCount  = emails.stream().filter(e -> e.getLabel() == 0).count();
+        assertTrue(spamCount > 0, "Dataset should contain at least one spam email");
+        assertTrue(hamCount  > 0, "Dataset should contain at least one ham email");
+    }
+
+    // REQUIREMENT 2: Extract numerical features from each email
+
+    @Test
+    @DisplayName("TextProcessor returns non-null EmailFeatures for any email")
+    void testExtractFeaturesReturnsNonNull() {
+        // Checks that extractFeatures() never returns null
+        TextProcessor tp = new TextProcessor();
+        Email email = new Email(1, "click here free offer hyperlink", 1);
+        EmailFeatures features = tp.extractFeatures(email);
+        assertNotNull(features, "EmailFeatures should not be null");
     }
 
     @Test
-    @DisplayName("EmailFeatures correctly detects all-caps words")
-    void testAllCapsWordCount() {
-        // Checks that only fully uppercase words (FREE, MONEY, NOW) are counted
-        Email email = new Email(3, "FREE MONEY NOW for you", true);
-        EmailFeatures features = new EmailFeatures(email);
-        assertEquals(3, features.getAllCapsCount(), "Should count FREE, MONEY, NOW as all-caps");
+    @DisplayName("EmailFeatures emailId matches the source email id")
+    void testEmailFeaturesIdMatchesEmail() {
+        // Checks that the EmailFeatures object is linked to the correct email
+        TextProcessor tp = new TextProcessor();
+        Email email = new Email(42, "click here free offer", 1);
+        EmailFeatures features = tp.extractFeatures(email);
+        assertEquals(42, features.getEmailId(), "EmailFeatures id should match source email id");
     }
 
     @Test
-    @DisplayName("EmailFeatures detects URL presence")
-    void testUrlDetection() {
-        // Checks that a URL is detected when present and not flagged when absent
-        Email withUrl = new Email(4, "Visit http://example.com today", true);
-        Email withoutUrl = new Email(5, "Hello, how are you?", false);
-        assertTrue(new EmailFeatures(withUrl).getHasUrl(), "Should detect URL");
-        assertFalse(new EmailFeatures(withoutUrl).getHasUrl(), "Should not detect URL in plain text");
-    }
-
-    @Test
-    @DisplayName("EmailFeatures detects dollar sign presence")
-    void testDollarSignCount() {
-        // Checks that each dollar sign in the text is counted individually
-        Email email = new Email(6, "Win $100 and $500 today!", true);
-        EmailFeatures features = new EmailFeatures(email);
-        assertEquals(2, features.getDollarSignCount(), "Should count 2 dollar signs");
-    }
-
-    @Test
-    @DisplayName("EmailFeatures detects call-to-action phrases")
-    void testCallToActionCount() {
-        // Checks that known call-to-action phrases like "Buy Now!" and "Click Here!" are detected
-        Email email = new Email(7, "Buy Now! Click Here! Act Today!", true);
-        EmailFeatures features = new EmailFeatures(email);
-        assertTrue(features.getCallToActionCount() >= 2, "Should detect at least 2 call-to-action phrases");
-    }
-
-    @Test
-    @DisplayName("EmailFeatures computes a positive average word length")
-    void testAvgWordLength() {
-        // Checks that average word length is greater than zero for a non-empty email
-        Email email = new Email(8, "Hello world", false);
-        EmailFeatures features = new EmailFeatures(email);
-        assertTrue(features.getAvgWordLength() > 0, "Average word length should be > 0 for non-empty email");
-    }
-
-    // REQUIREMENT 3: Display individual email features
-
-    @Test
-    @DisplayName("EmailFeatures toString/display contains key feature labels")
-    void testEmailFeaturesDisplay() {
-        // Checks that toString() returns a non-blank string that references at least one feature label
-        Email email = new Email(9, "Buy now! Free offer!", true);
-        EmailFeatures features = new EmailFeatures(email);
-        String display = features.toString();
-        assertNotNull(display, "Display output should not be null");
-        assertFalse(display.isBlank(), "Display output should not be blank");
-        assertTrue(display.toLowerCase().contains("word") || display.contains("count"),
-                "Display should mention word count");
-    }
-
-    // REQUIREMENT 4: Display summary of email features
-
-    @Test
-    @DisplayName("FeatureSummary computes mean values from a list of EmailFeatures")
-    void testFeatureSummaryMeans() {
-        // Checks that mean word count and mean word length are both greater than zero
-        List<Email> emails = List.of(
-            new Email(10, "Buy now! $5 http://x.com FREE", true),
-            new Email(11, "Click here! WIN $100 TODAY", true)
+    @DisplayName("EmailFeatures contains all 11 expected features")
+    void testEmailFeaturesContainsAllFeatures() {
+        // Checks that all 11 features are present in the feature map
+        TextProcessor tp = new TextProcessor();
+        Email email = new Email(1, "click here free offer hyperlink kingdom guaranteed mortgage mailings money order", 1);
+        EmailFeatures features = tp.extractFeatures(email);
+        List<String> expectedFeatures = List.of(
+            "hyperlinkCount", "kingdomCount", "guaranteedCount",
+            "mortgageCount", "clickCount", "mailingsCount",
+            "moneyCount", "offerCount", "orderCount",
+            "freeCount", "urlCount"
         );
-        List<EmailFeatures> featuresList = emails.stream()
-                .map(EmailFeatures::new).toList();
-        FeatureSummary summary = new FeatureSummary(featuresList);
-        assertTrue(summary.getWordCount() > 0, "Summary mean word count should be > 0");
-        assertTrue(summary.getAvgWordLength() > 0, "Summary mean word length should be > 0");
+        for (String feature : expectedFeatures) {
+            assertTrue(features.getFeatures().containsKey(feature),
+                    "Features should contain: " + feature);
+        }
     }
 
     @Test
-    @DisplayName("FeatureSummary toString/display is non-null and non-empty")
-    void testFeatureSummaryDisplay() {
-        // Checks that the summary display output is non-null and non-blank
-        List<EmailFeatures> featuresList = List.of(
-            new EmailFeatures(new Email(12, "Hello world", false))
-        );
-        FeatureSummary summary = new FeatureSummary(featuresList);
-        String display = summary.toString();
-        assertNotNull(display);
-        assertFalse(display.isBlank());
-    }
-
-    // REQUIREMENT 5: Build spam and not-spam models from labeled data
-
-    @Test
-    @DisplayName("Spam model is built only from spam-labeled emails")
-    void testSpamModelUsesOnlySpamEmails() throws Exception {
-        // Checks that filtering by label=true produces at least one email and builds a valid summary
-        CSVParser parser = new CSVParser();
-        List<Email> allEmails = parser.readFile("spam_or_not_spam.csv");
-        List<Email> spamEmails = allEmails.stream()
-                .filter(e -> Boolean.TRUE.equals(e.getLabel())).toList();
-        List<EmailFeatures> spamFeatures = spamEmails.stream()
-                .map(EmailFeatures::new).toList();
-        assertFalse(spamFeatures.isEmpty(), "There should be at least one spam email in the dataset");
-        FeatureSummary spamSummary = new FeatureSummary(spamFeatures);
-        assertNotNull(spamSummary, "Spam model should not be null");
+    @DisplayName("hyperlinkCount correctly counts hyperlink token")
+    void testHyperlinkCountIsCorrect() {
+        // Checks that hyperlink appearances are counted correctly
+        TextProcessor tp = new TextProcessor();
+        Email email = new Email(2, "hyperlink hyperlink hyperlink", 1);
+        EmailFeatures features = tp.extractFeatures(email);
+        assertEquals(3.0, features.get("hyperlinkCount"), 0.001,
+                "hyperlinkCount should be 3");
     }
 
     @Test
-    @DisplayName("Not-spam model is built only from not-spam-labeled emails")
-    void testNotSpamModelUsesOnlyNotSpamEmails() throws Exception {
-        // Checks that filtering by label=false produces at least one email and builds a valid summary
-        CSVParser parser = new CSVParser();
-        List<Email> allEmails = parser.readFile("spam_or_not_spam.csv");
-        List<Email> notSpamEmails = allEmails.stream()
-                .filter(e -> Boolean.FALSE.equals(e.getLabel())).toList();
-        List<EmailFeatures> notSpamFeatures = notSpamEmails.stream()
-                .map(EmailFeatures::new).toList();
-        assertFalse(notSpamFeatures.isEmpty(), "There should be at least one not-spam email in the dataset");
-        FeatureSummary notSpamSummary = new FeatureSummary(notSpamFeatures);
-        assertNotNull(notSpamSummary, "Not-spam model should not be null");
+    @DisplayName("Feature values are zero for words not present in email")
+    void testAbsentFeaturesAreZero() {
+        // Checks that features default to 0 when their word does not appear
+        TextProcessor tp = new TextProcessor();
+        Email email = new Email(3, "hello how are you today", 0);
+        EmailFeatures features = tp.extractFeatures(email);
+        assertEquals(0.0, features.get("hyperlinkCount"), 0.001,
+                "hyperlinkCount should be 0 for plain email");
+        assertEquals(0.0, features.get("freeCount"), 0.001,
+                "freeCount should be 0 for plain email");
     }
 
-    // REQUIREMENT 6: Classify a new email as spam or not spam
+    @Test
+    @DisplayName("Feature values are non-negative for any email")
+    void testFeatureValuesAreNonNegative() {
+        // Checks that no feature value is negative
+        TextProcessor tp = new TextProcessor();
+        CsvParser parser = new CsvParser();
+        List<Email> emails = parser.readFile("spam_or_not_spam.csv");
+        for (Email e : emails.subList(0, 10)) {
+            EmailFeatures features = tp.extractFeatures(e);
+            for (double value : features.getFeatures().values()) {
+                assertTrue(value >= 0, "No feature value should be negative");
+            }
+        }
+    }
+
+    // REQUIREMENT 3: Build spam and ham summary models
 
     @Test
-    @DisplayName("Obvious spam email classifies closer to spam model")
-    void testObviousSpamClassification() {
-        // Checks that a spam-like email has a smaller distanceTo() the spam model than the not-spam model
+    @DisplayName("FeatureSummary produces non-null model from spam features")
+    void testSpamSummaryIsNonNull() {
+        // Checks that a spam model can be built from spam training features
+        TextProcessor tp = new TextProcessor();
         List<EmailFeatures> spamFeatures = List.of(
-            new EmailFeatures(new Email(20, "Buy Now! FREE OFFER! Click Here! $100 http://spam.com WIN WIN WIN!!!", true)),
-            new EmailFeatures(new Email(21, "WINNER! You have won $500! Click Here! Buy Now!", true))
+            tp.extractFeatures(new Email(1, "click here free hyperlink offer money", 1)),
+            tp.extractFeatures(new Email(2, "hyperlink guaranteed free click money", 1))
         );
-        List<EmailFeatures> notSpamFeatures = List.of(
-            new EmailFeatures(new Email(22, "Hi, are we still on for lunch tomorrow?", false)),
-            new EmailFeatures(new Email(23, "Please find the attached meeting notes.", false))
-        );
-        FeatureSummary spamModel = new FeatureSummary(spamFeatures);
-        FeatureSummary notSpamModel = new FeatureSummary(notSpamFeatures);
-        Email unknownEmail = new Email(99, "BUY NOW! FREE MONEY! Click Here! $$$! http://win.com", null);
-        EmailFeatures unknownFeatures = new EmailFeatures(unknownEmail);
-        double distToSpam = unknownFeatures.distanceTo(spamModel);
-        double distToNotSpam = unknownFeatures.distanceTo(notSpamModel);
-        assertTrue(distToSpam < distToNotSpam, "Obvious spam email should be closer to the spam model");
+        FeatureSummary spamSummary = new FeatureSummary();
+        spamSummary.summarize(spamFeatures);
+        assertNotNull(spamSummary, "Spam summary should not be null");
     }
 
     @Test
-    @DisplayName("Obvious not-spam email classifies closer to not-spam model")
-    void testObviousNotSpamClassification() {
-        // Checks that a plain conversational email has a smaller distanceTo() the not-spam model
+    @DisplayName("FeatureSummary mean for hyperlinkCount is correct")
+    void testSpamSummaryMeanIsCorrect() {
+        // Checks that the mean hyperlinkCount is computed correctly across two emails
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> features = List.of(
+            tp.extractFeatures(new Email(1, "hyperlink hyperlink", 1)),
+            tp.extractFeatures(new Email(2, "hyperlink", 1))
+        );
+        FeatureSummary summary = new FeatureSummary();
+        summary.summarize(features);
+        assertEquals(1.5, summary.getMean("hyperlinkCount"), 0.001,
+                "Mean hyperlinkCount should be 1.5");
+    }
+
+    @Test
+    @DisplayName("FeatureSummary min and max are computed correctly")
+    void testSummaryMinAndMaxAreCorrect() {
+        // Checks that min and max values are tracked correctly across emails
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> features = List.of(
+            tp.extractFeatures(new Email(1, "hyperlink hyperlink hyperlink", 1)),
+            tp.extractFeatures(new Email(2, "hello world", 0))
+        );
+        FeatureSummary summary = new FeatureSummary();
+        summary.summarize(features);
+        assertEquals(0.0, summary.getMin("hyperlinkCount"), 0.001,
+                "Min hyperlinkCount should be 0");
+        assertEquals(3.0, summary.getMax("hyperlinkCount"), 0.001,
+                "Max hyperlinkCount should be 3");
+    }
+
+    @Test
+    @DisplayName("FeatureSummary count matches number of emails summarized")
+    void testSummaryCountIsCorrect() {
+        // Checks that the count field reflects the number of emails in the summary
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> features = List.of(
+            tp.extractFeatures(new Email(1, "free click hyperlink", 1)),
+            tp.extractFeatures(new Email(2, "money offer order", 1)),
+            tp.extractFeatures(new Email(3, "guaranteed mortgage mailings", 1))
+        );
+        FeatureSummary summary = new FeatureSummary();
+        summary.summarize(features);
+        assertEquals(3, summary.getCount(), "Summary count should match number of emails");
+    }
+
+    // REQUIREMENT 4: Classify emails using Weighted Centroid
+
+    @Test
+    @DisplayName("SpamClassifier predicts spam for obvious spam email")
+    void testCentroidPredictsSPamForObviousSpam() {
+        // Checks that a spam-like email is classified as spam
+        TextProcessor tp = new TextProcessor();
         List<EmailFeatures> spamFeatures = List.of(
-            new EmailFeatures(new Email(30, "Buy Now! FREE $500! Click Here! WIN!!!", true)),
-            new EmailFeatures(new Email(31, "WINNER! Click Here! $100 FREE http://spam.com", true))
+            tp.extractFeatures(new Email(1, "hyperlink hyperlink free click offer money guaranteed", 1)),
+            tp.extractFeatures(new Email(2, "hyperlink click free offer kingdom mortgage mailings", 1))
         );
-        List<EmailFeatures> notSpamFeatures = List.of(
-            new EmailFeatures(new Email(32, "Can you send me the report by Friday?", false)),
-            new EmailFeatures(new Email(33, "Looking forward to our meeting next week.", false))
+        List<EmailFeatures> hamFeatures = List.of(
+            tp.extractFeatures(new Email(3, "hello how are you doing today", 0)),
+            tp.extractFeatures(new Email(4, "meeting tomorrow at the office please confirm", 0))
         );
-        FeatureSummary spamModel = new FeatureSummary(spamFeatures);
-        FeatureSummary notSpamModel = new FeatureSummary(notSpamFeatures);
-        Email unknownEmail = new Email(98, "Hi, please review the attached document when you get a chance.", null);
-        EmailFeatures unknownFeatures = new EmailFeatures(unknownEmail);
-        double distToSpam = unknownFeatures.distanceTo(spamModel);
-        double distToNotSpam = unknownFeatures.distanceTo(notSpamModel);
-        assertTrue(distToNotSpam < distToSpam, "Obvious not-spam email should be closer to the not-spam model");
+        SpamClassifier classifier = new SpamClassifier();
+        classifier.train(spamFeatures, hamFeatures);
+        EmailFeatures testEmail = tp.extractFeatures(
+            new Email(99, "hyperlink hyperlink hyperlink free click offer money guaranteed", 1));
+        assertEquals("spam", classifier.predict(testEmail),
+                "Obvious spam email should be classified as spam");
     }
 
     @Test
-    @DisplayName("distanceTo returns 0 for an email compared to itself")
-    void testDistanceToSelfIsZero() {
-        // Checks that the Manhattan distance from an email's features to itself is exactly 0
-        Email email = new Email(50, "Hello world, this is a test.", false);
-        EmailFeatures f = new EmailFeatures(email);
-        assertEquals(0.0, f.distanceTo(f), 0.0001, "Distance from an email to itself should be 0");
+    @DisplayName("SpamClassifier predicts ham for obvious ham email")
+    void testCentroidPredictsHamForObviousHam() {
+        // Checks that a plain conversational email is classified as ham
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> spamFeatures = List.of(
+            tp.extractFeatures(new Email(1, "hyperlink hyperlink free click offer money guaranteed", 1)),
+            tp.extractFeatures(new Email(2, "hyperlink click free offer kingdom mortgage mailings", 1))
+        );
+        List<EmailFeatures> hamFeatures = List.of(
+            tp.extractFeatures(new Email(3, "hello how are you doing today", 0)),
+            tp.extractFeatures(new Email(4, "meeting tomorrow at the office please confirm", 0))
+        );
+        SpamClassifier classifier = new SpamClassifier();
+        classifier.train(spamFeatures, hamFeatures);
+        EmailFeatures testEmail = tp.extractFeatures(
+            new Email(98, "please find the attached document for your review", 0));
+        assertEquals("ham", classifier.predict(testEmail),
+                "Obvious ham email should be classified as ham");
     }
 
     @Test
-    @DisplayName("distanceTo is non-negative between different emails")
-    void testDistanceIsNonNegative() {
-        // Checks that Manhattan distance is always >= 0 between any two emails
-        EmailFeatures f1 = new EmailFeatures(new Email(51, "Buy now! Free!", true));
-        EmailFeatures f2 = new EmailFeatures(new Email(52, "Hello, how are you?", false));
-        assertTrue(f1.distanceTo(f2) >= 0, "Manhattan distance must be non-negative");
+    @DisplayName("SpamClassifier distanceToModel returns non-negative value")
+    void testDistanceToModelIsNonNegative() {
+        // Checks that distance calculation always returns a non-negative value
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> spamFeatures = List.of(
+            tp.extractFeatures(new Email(1, "hyperlink free click offer money", 1))
+        );
+        List<EmailFeatures> hamFeatures = List.of(
+            tp.extractFeatures(new Email(2, "hello how are you", 0))
+        );
+        SpamClassifier classifier = new SpamClassifier();
+        classifier.train(spamFeatures, hamFeatures);
+        EmailFeatures testEmail = tp.extractFeatures(new Email(99, "free click hyperlink", 1));
+        FeatureSummary spamModel = new FeatureSummary();
+        spamModel.summarize(spamFeatures);
+        assertTrue(classifier.distanceToModel(testEmail, spamModel) >= 0,
+                "Distance to model should be non-negative");
     }
 
-    // REQUIREMENT 7: Write email features to a CSV file
+    // REQUIREMENT 5: Classify emails using Naive Bayes
+
+    @Test
+    @DisplayName("NaiveBayesClassifier predicts spam for obvious spam email")
+    void testNaiveBayesPredictsSPamForObviousSpam() {
+        // Checks that a spam-like email is classified as spam by Naive Bayes
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> spamFeatures = List.of(
+            tp.extractFeatures(new Email(1, "hyperlink hyperlink free click offer money guaranteed", 1)),
+            tp.extractFeatures(new Email(2, "hyperlink click free offer kingdom mortgage mailings", 1))
+        );
+        List<EmailFeatures> hamFeatures = List.of(
+            tp.extractFeatures(new Email(3, "hello how are you doing today", 0)),
+            tp.extractFeatures(new Email(4, "meeting tomorrow at the office please confirm", 0))
+        );
+        NaiveBayesClassifier nb = new NaiveBayesClassifier();
+        nb.train(spamFeatures, hamFeatures);
+        EmailFeatures testEmail = tp.extractFeatures(
+            new Email(99, "hyperlink hyperlink hyperlink free click offer money guaranteed", 1));
+        assertEquals("spam", nb.predict(testEmail),
+                "Obvious spam email should be classified as spam by Naive Bayes");
+    }
+
+    @Test
+    @DisplayName("NaiveBayesClassifier predicts ham for obvious ham email")
+    void testNaiveBayesPredictsHamForObviousHam() {
+        // Checks that a plain conversational email is classified as ham by Naive Bayes
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> spamFeatures = List.of(
+            tp.extractFeatures(new Email(1, "hyperlink hyperlink free click offer money guaranteed", 1)),
+            tp.extractFeatures(new Email(2, "hyperlink click free offer kingdom mortgage mailings", 1))
+        );
+        List<EmailFeatures> hamFeatures = List.of(
+            tp.extractFeatures(new Email(3, "hello how are you doing today", 0)),
+            tp.extractFeatures(new Email(4, "meeting tomorrow at the office please confirm", 0))
+        );
+        NaiveBayesClassifier nb = new NaiveBayesClassifier();
+        nb.train(spamFeatures, hamFeatures);
+        EmailFeatures testEmail = tp.extractFeatures(
+            new Email(98, "please find the attached document for your review", 0));
+        assertEquals("ham", nb.predict(testEmail),
+                "Obvious ham email should be classified as ham by Naive Bayes");
+    }
+
+    @Test
+    @DisplayName("NaiveBayesClassifier achieves at least 85% accuracy on full dataset")
+    void testNaiveBayesAccuracyOnFullDataset() {
+        // Checks that Naive Bayes achieves at least 85% accuracy on the full dataset
+        CsvParser parser = new CsvParser();
+        List<Email> emails = parser.readFile("spam_or_not_spam.csv");
+        Collections.shuffle(emails, new Random(42));
+        int splitIndex = (int)(emails.size() * 0.80);
+        List<Email> trainEmails = emails.subList(0, splitIndex);
+        List<Email> testEmails  = emails.subList(splitIndex, emails.size());
+
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> spamFeatures = new ArrayList<>();
+        List<EmailFeatures> hamFeatures  = new ArrayList<>();
+        List<EmailFeatures> testFeatures = new ArrayList<>();
+
+        for (Email e : trainEmails) {
+            EmailFeatures ef = tp.extractFeatures(e);
+            if (e.getLabel() == 1) spamFeatures.add(ef);
+            else hamFeatures.add(ef);
+        }
+        for (Email e : testEmails) {
+            testFeatures.add(tp.extractFeatures(e));
+        }
+
+        NaiveBayesClassifier nb = new NaiveBayesClassifier();
+        nb.train(spamFeatures, hamFeatures);
+
+        int correct = 0;
+        for (int i = 0; i < testEmails.size(); i++) {
+            String prediction = nb.predict(testFeatures.get(i));
+            String actual     = testEmails.get(i).getLabel() == 1 ? "spam" : "ham";
+            if (prediction.equals(actual)) correct++;
+        }
+
+        double accuracy = (double) correct / testEmails.size() * 100;
+        assertTrue(accuracy >= 85.0,
+                "Naive Bayes should achieve at least 85% accuracy, got: " + accuracy + "%");
+    }
+
+    // REQUIREMENT 6: Write features and summaries to CSV files
 
     @Test
     @DisplayName("CsvWriter creates email features CSV file at given path")
     void testWriteFeaturesCreatesFile() throws Exception {
         // Checks that writeFeatures() creates a non-empty file at the specified path
+        TextProcessor tp = new TextProcessor();
         List<EmailFeatures> featuresList = List.of(
-            new EmailFeatures(new Email(60, "Buy now! Free offer!", true)),
-            new EmailFeatures(new Email(61, "See you tomorrow.", false))
+            tp.extractFeatures(new Email(1, "click here free hyperlink", 1)),
+            tp.extractFeatures(new Email(2, "hello how are you", 0))
         );
         String path = "test_features_output.csv";
         CsvWriter writer = new CsvWriter();
@@ -267,33 +383,34 @@ public class TextProcessingTests {
     }
 
     @Test
-    @DisplayName("Email features CSV has a header row and one row per email")
+    @DisplayName("Email features CSV has header row and one row per email")
     void testWriteFeaturesCSVFormat() throws Exception {
-        // Checks that the CSV has a header row with feature column names and one data row per email
+        // Checks that the CSV has a header row and one data row per email
+        TextProcessor tp = new TextProcessor();
         List<EmailFeatures> featuresList = List.of(
-            new EmailFeatures(new Email(62, "Win $100 today!", true)),
-            new EmailFeatures(new Email(63, "Project update attached.", false))
+            tp.extractFeatures(new Email(1, "click free hyperlink offer money", 1)),
+            tp.extractFeatures(new Email(2, "hello world meeting tomorrow", 0))
         );
         String path = "test_features_format.csv";
         CsvWriter writer = new CsvWriter();
         writer.writeFeatures(featuresList, path);
         List<String> lines = Files.readAllLines(Paths.get(path));
-        assertTrue(lines.size() >= 3, "CSV should have header + 2 data rows");
+        assertTrue(lines.size() >= 3, "CSV should have header plus 2 data rows");
         String header = lines.get(0).toLowerCase();
-        assertTrue(header.contains("word") || header.contains("count") || header.contains("exclamation"),
-                "Header row should contain feature column names");
+        assertTrue(header.contains("emailid"), "Header should contain emailId column");
         new File(path).delete();
     }
-
-    // REQUIREMENT 8: Write summary data to a CSV file
 
     @Test
     @DisplayName("CsvWriter creates summary CSV file at given path")
     void testWriteSummaryCreatesFile() throws Exception {
         // Checks that writeSummary() creates a non-empty file at the specified path
-        FeatureSummary summary = new FeatureSummary(List.of(
-            new EmailFeatures(new Email(70, "Buy now! FREE MONEY!", true))
-        ));
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> featuresList = List.of(
+            tp.extractFeatures(new Email(1, "click free hyperlink offer money guaranteed", 1))
+        );
+        FeatureSummary summary = new FeatureSummary();
+        summary.summarize(featuresList);
         String path = "test_summary_output.csv";
         CsvWriter writer = new CsvWriter();
         writer.writeSummary(summary, path);
@@ -304,18 +421,64 @@ public class TextProcessingTests {
     }
 
     @Test
-    @DisplayName("Summary CSV contains all expected feature fields")
-    void testWriteSummaryCSVContainsAllFeatures() throws Exception {
-        // Checks that the summary CSV references expected field names like word count and exclamation count
-        FeatureSummary summary = new FeatureSummary(List.of(
-            new EmailFeatures(new Email(71, "Click Here! $50 http://deal.com FREE", true))
-        ));
-        String path = "test_summary_fields.csv";
+    @DisplayName("Summary CSV contains feature mean min and max columns")
+    void testWriteSummaryCSVContainsColumns() throws Exception {
+        // Checks that the summary CSV header contains feature, mean, min, and max columns
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> featuresList = List.of(
+            tp.extractFeatures(new Email(1, "click free hyperlink offer money", 1))
+        );
+        FeatureSummary summary = new FeatureSummary();
+        summary.summarize(featuresList);
+        String path = "test_summary_columns.csv";
         CsvWriter writer = new CsvWriter();
         writer.writeSummary(summary, path);
         String content = Files.readString(Paths.get(path)).toLowerCase();
-        assertTrue(content.contains("word") || content.contains("count"), "Should reference word count");
-        assertTrue(content.contains("exclamation") || content.contains("!"), "Should reference exclamation count");
+        assertTrue(content.contains("feature"), "Summary CSV should contain feature column");
+        assertTrue(content.contains("mean"),    "Summary CSV should contain mean column");
+        assertTrue(content.contains("min"),     "Summary CSV should contain min column");
+        assertTrue(content.contains("max"),     "Summary CSV should contain max column");
+        new File(path).delete();
+    }
+
+    @Test
+    @DisplayName("Predictions file is created and contains one prediction per line")
+    void testPredictionsFileFormat() throws Exception {
+        // Checks that predictions.txt is created with one spam or ham prediction per line
+        CsvParser parser = new CsvParser();
+        List<Email> emails = parser.readFile("spam_or_not_spam.csv");
+        Collections.shuffle(emails, new Random(42));
+        int splitIndex = (int)(emails.size() * 0.80);
+        List<Email> trainEmails = emails.subList(0, splitIndex);
+        List<Email> testEmails  = emails.subList(splitIndex, emails.size());
+
+        TextProcessor tp = new TextProcessor();
+        List<EmailFeatures> spamFeatures = new ArrayList<>();
+        List<EmailFeatures> hamFeatures  = new ArrayList<>();
+        List<EmailFeatures> testFeatures = new ArrayList<>();
+
+        for (Email e : trainEmails) {
+            EmailFeatures ef = tp.extractFeatures(e);
+            if (e.getLabel() == 1) spamFeatures.add(ef);
+            else hamFeatures.add(ef);
+        }
+        for (Email e : testEmails) {
+            testFeatures.add(tp.extractFeatures(e));
+        }
+
+        NaiveBayesClassifier nb = new NaiveBayesClassifier();
+        nb.train(spamFeatures, hamFeatures);
+
+        String path = "test_predictions.txt";
+        nb.predictAndWrite(testFeatures, path);
+
+        List<String> lines = Files.readAllLines(Paths.get(path));
+        assertEquals(testEmails.size(), lines.size(),
+                "Predictions file should have one line per test email");
+        for (String line : lines) {
+            assertTrue(line.equals("spam") || line.equals("ham"),
+                    "Each prediction should be spam or ham, got: " + line);
+        }
         new File(path).delete();
     }
 }
