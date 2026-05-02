@@ -296,7 +296,7 @@ Seeding Collections.shuffle ensures the train/test split is identical every run,
 **Carter Fennen**
 Computer Science — West Chester University of Pennsylvania
 [GitHub](https://github.com/carterfennen) • carterfennen@icloud.com
-CO1023015@wcupa.edu
+CF1043549@wcupa.edu
 
 ---
 
